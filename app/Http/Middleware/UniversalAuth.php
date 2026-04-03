@@ -31,10 +31,8 @@ final class UniversalAuth
 
     private function isAuthenticated(Request $request, Closure $next, bool $isAuthenticated): Response
     {
-        if($isAuthenticated) {
-            if ($request->routeIs('login')) {
-                return redirect()->route('dashboard');
-            }
+        if($isAuthenticated && $request->routeIs('login')) {
+            return redirect()->route('dashboard');
         }
 
         return $next($request);
@@ -42,10 +40,8 @@ final class UniversalAuth
 
     private function isNotAuthenticated(Request $request, Closure $next, bool $isAuthenticated): Response
     {
-        if (! $isAuthenticated) {
-            if (! $request->routeIs('login')) {
-                return redirect()->route('login', ['return_to' => $request->fullUrl()]);
-            }
+        if (! $isAuthenticated && ! $request->routeIs('login')) {
+            return redirect()->route('login', ['return_to' => $request->fullUrl()]);
         }
 
         return $next($request);
