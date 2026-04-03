@@ -6,11 +6,13 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Middleware\UniversalAuth;
 
-const LOGIN_PATH = '/login';
+if (!defined('LOGIN_PATH')) {
+    define('LOGIN_PATH', '/login');
+}
 
 Route::redirect('/', LOGIN_PATH);
 
-Route::post(LOGIN_PATH, [AuthController::class, 'login']);
+Route::post(LOGIN_PATH, [AuthController::class, 'login'])->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::middleware(['universal.auth'])->group(function () {
