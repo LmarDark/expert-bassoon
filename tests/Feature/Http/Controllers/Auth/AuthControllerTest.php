@@ -5,8 +5,10 @@ declare(strict_types=1);
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
+const ALLOWED_HOST_REDIRECT_ENV = 'ALLOWED_HOST_REDIRECT=example.com';
+
 beforeEach(function () {
-    putenv('ALLOWED_HOST_REDIRECT=example.com');
+    putenv(ALLOWED_HOST_REDIRECT_ENV);
 
     $this->user = User::factory()->create([
         'username' => 'testuser',
@@ -58,8 +60,6 @@ describe('AuthController', function () {
         });
 
         it('redirects to dashboard by default after login', function () {
-            putenv('ALLOWED_HOST_REDIRECT=example.com');
-
             $response = $this->post(route('login.submit'), [
                 'username' => 'testuser',
                 'password' => 'password123',
@@ -69,8 +69,6 @@ describe('AuthController', function () {
         });
 
         it('redirects to return_to URL when valid and safe', function () {
-            putenv('ALLOWED_HOST_REDIRECT=example.com');
-
             $response = $this->post(route('login.submit'), [
                 'username' => 'testuser',
                 'password' => 'password123',
@@ -81,8 +79,6 @@ describe('AuthController', function () {
         });
 
         it('redirects to dashboard when return_to host is not allowed', function () {
-            putenv('ALLOWED_HOST_REDIRECT=example.com');
-
             $response = $this->post(route('login.submit'), [
                 'username' => 'testuser',
                 'password' => 'password123',
@@ -93,8 +89,6 @@ describe('AuthController', function () {
         });
 
         it('uses session intended URL when return_to is not provided', function () {
-            putenv('ALLOWED_HOST_REDIRECT=example.com');
-
             session()->put('url.intended', 'https://app.example.com/intended');
 
             $response = $this->post(route('login.submit'), [
@@ -106,7 +100,7 @@ describe('AuthController', function () {
         });
 
         it('handles remember me option', function () {
-            $response = $this->post(route('login.submit'), [
+            $this->post(route('login.submit'), [
                 'username' => 'testuser',
                 'password' => 'password123',
                 'remember' => true,
@@ -120,7 +114,7 @@ describe('AuthController', function () {
         it('logs out authenticated user', function () {
             $this->actingAs($this->user);
 
-            $response = $this->post(route('logout'));
+            $this->post(route('logout'));
 
             $this->assertGuest();
         });
