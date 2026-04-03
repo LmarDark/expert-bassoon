@@ -9,7 +9,7 @@
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
+        <link rel="stylesheet" href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" integrity="sha384-UxxWgag74MMNnIyjW0WTPMb1YCyZcv+1kgN3cTAaOwJxjBHMANK3/cVisE12I4A5" crossorigin="anonymous">
 
         @vite(['resources/css/app.css', 'resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
         <x-inertia::head>
