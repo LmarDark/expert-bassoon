@@ -14,11 +14,12 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property int $id
  * @property string $username
  * @property string $password
+ * @property bool $is_admin
  * @property string|null $remember_token
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
-#[Fillable(['username', 'password'])]
+#[Fillable(['username', 'password', 'is_admin'])]
 #[Hidden(['password', 'remember_token'])]
 
 final class User extends Authenticatable
@@ -34,6 +35,7 @@ final class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'is_admin' => 'boolean',
         ];
     }
 }

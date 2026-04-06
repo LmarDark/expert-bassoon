@@ -18,7 +18,7 @@ Route::get('/setup', [SetupController::class, 'show'])->name('setup');
 Route::post('/setup', [SetupController::class, 'store'])->name('setup.store');
 
 // Autenticação
-Route::post(LOGIN_PATH, [AuthController::class, 'login'])->name('login.submit');
+Route::post(LOGIN_PATH, [AuthController::class, 'login'])->middleware('throttle:10,1')->name('login.submit');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Validação de sessão para o auth_request do Nginx (SSO)
@@ -31,8 +31,8 @@ Route::middleware(['universal.auth'])->group(function () {
     Route::inertia(LOGIN_PATH, 'Auth/Login')->name('login');
     Route::inertia('/dashboard', 'Dashboard')->name('dashboard');
 
-    // Admin - gerenciamento de usuários
-    Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin - gerenciamento de usuários (apenas admins)
+    Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])->name('users.create');
         Route::post('/users', [UserController::class, 'store'])->name('users.store');

@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,7 +27,17 @@ final class SetupController extends Controller
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
-        $user = User::query()->create($validated);
+        $user = DB::transaction(function () use ($validated) {
+            if (User::query()->exists()) {
+                abort(403);
+            }
+
+            return User::query()->create([
+                'username' => $validated['username'],
+                'password' => $validated['password'],
+                'is_admin' => true,
+            ]);
+        });
 
         Auth::login($user);
         $request->session()->regenerate();

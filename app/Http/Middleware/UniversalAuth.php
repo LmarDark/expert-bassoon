@@ -20,7 +20,7 @@ final class UniversalAuth
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $this->isAuthenticated = Auth::check() || $request->hasCookie(Auth::getRecallerName());
+        $this->isAuthenticated = Auth::check();
 
         if(!$this->isAuthenticated) {
             return $this->isNotAuthenticated($request, $next, $this->isAuthenticated);

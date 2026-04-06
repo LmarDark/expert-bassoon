@@ -3,12 +3,11 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Hash;
 
-const ALLOWED_HOST_REDIRECT_ENV = 'ALLOWED_HOST_REDIRECT=example.com';
-
 beforeEach(function () {
-    putenv(ALLOWED_HOST_REDIRECT_ENV);
+    Config::set('app.allowed_host_redirect', 'example.com');
 
     $this->user = User::factory()->create([
         'username' => 'testuser',
@@ -78,11 +77,43 @@ describe('AuthController', function () {
             $response->assertRedirect('https://app.example.com/page');
         });
 
+        it('redirects to exact allowed host without subdomain', function () {
+            $response = $this->post(route('login.submit'), [
+                'username' => 'testuser',
+                'password' => 'password123',
+                'return_to' => 'https://example.com/page',
+            ]);
+
+            $response->assertRedirect('https://example.com/page');
+        });
+
         it('redirects to dashboard when return_to host is not allowed', function () {
             $response = $this->post(route('login.submit'), [
                 'username' => 'testuser',
                 'password' => 'password123',
                 'return_to' => 'https://malicious.com/phishing',
+            ]);
+
+            $response->assertRedirect(route('dashboard'));
+        });
+
+        it('redirects to dashboard when return_to spoofs allowed host as suffix', function () {
+            $response = $this->post(route('login.submit'), [
+                'username' => 'testuser',
+                'password' => 'password123',
+                'return_to' => 'https://evilexample.com/page',
+            ]);
+
+            $response->assertRedirect(route('dashboard'));
+        });
+
+        it('redirects to dashboard when allowed_host_redirect is empty', function () {
+            Config::set('app.allowed_host_redirect', '');
+
+            $response = $this->post(route('login.submit'), [
+                'username' => 'testuser',
+                'password' => 'password123',
+                'return_to' => 'https://app.example.com/page',
             ]);
 
             $response->assertRedirect(route('dashboard'));

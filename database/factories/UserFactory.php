@@ -27,10 +27,16 @@ final class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'username' => fake()->userName(),
-            'password' => self::$password ??= Hash::make('password'),
+            'username'       => fake()->unique()->userName(),
+            'password'       => self::$password ??= Hash::make('password'),
+            'is_admin'       => false,
             'remember_token' => Str::random(10),
         ];
+    }
+
+    public function admin(): static
+    {
+        return $this->state(['is_admin' => true]);
     }
 
 }

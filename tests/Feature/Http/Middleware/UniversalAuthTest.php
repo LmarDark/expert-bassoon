@@ -24,6 +24,11 @@ describe('UniversalAuth Middleware', function () {
     });
 
     describe('when user is not authenticated', function () {
+        beforeEach(function () {
+            // Cria um usuário para que o CheckFirstSetup não intercepte as requisições
+            User::factory()->create();
+        });
+
         it('redirects to login when accessing dashboard', function () {
             $response = $this->get(route('dashboard'));
 

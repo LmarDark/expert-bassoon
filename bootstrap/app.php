@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Http\Middleware\CheckFirstSetup;
+use App\Http\Middleware\EnsureIsAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\UniversalAuth;
 use Illuminate\Foundation\Application;
@@ -18,7 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'universal.auth' => UniversalAuth::class
+            'universal.auth' => UniversalAuth::class,
+            'admin'          => EnsureIsAdmin::class,
         ]);
 
         $middleware->web(prepend: [
