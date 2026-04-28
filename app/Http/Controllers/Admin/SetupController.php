@@ -33,7 +33,7 @@ final class SetupController extends Controller
             }
 
             return User::query()->create([
-                'username' => $validated['username'],
+                'username' => "admin_" . $validated['username'],
                 'password' => $validated['password'],
                 'is_admin' => true,
             ]);
