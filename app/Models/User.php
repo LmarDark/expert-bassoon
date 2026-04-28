@@ -12,6 +12,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 
 /**
  * @property int $id
+ * @property string #nickname
  * @property string $username
  * @property string $password
  * @property bool $is_admin
@@ -19,7 +20,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
  */
-#[Fillable(['username', 'password', 'is_admin'])]
+#[Fillable(['nickname', 'username', 'password', 'is_admin'])]
 #[Hidden(['password', 'remember_token'])]
 
 final class User extends Authenticatable

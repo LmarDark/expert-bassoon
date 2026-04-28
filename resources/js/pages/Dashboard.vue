@@ -6,6 +6,7 @@ defineProps<{
     auth: {
         user: {
             username: string;
+            nickname?: string;
         };
     };
 }>();
@@ -72,7 +73,7 @@ function logout() {
                 <div class="h-4 w-px bg-[#e3e3e0] dark:bg-[#3E3E3A]"></div>
 
                 <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                    {{ auth.user.username }}
+                    {{ auth.user.nickname ? `${auth.user.nickname} (${auth.user.username})` : auth.user.username }} 
                 </span>
                 <button
                     type="button"
@@ -89,7 +90,7 @@ function logout() {
             <div class="mx-auto max-w-5xl">
                 <div class="mb-8">
                     <h1 class="text-2xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
-                        Bem-vindo, {{ auth.user.username }}!
+                        Bem-vindo, {{ auth.user.nickname ? `${auth.user.nickname} (${auth.user.username})` : auth.user.username }}!
                     </h1>
                     <p class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                         Você está autenticado no sistema.
@@ -119,11 +120,11 @@ function logout() {
                         <div class="rounded-sm border border-[#e3e3e0] bg-[#f9f9f8] px-4 py-3 dark:border-[#3E3E3A] dark:bg-[#1a1a18]">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-8 w-8 items-center justify-center rounded-full bg-[#1b1b18] text-xs font-semibold uppercase text-white dark:bg-[#EDEDEC] dark:text-[#1b1b18]">
-                                    {{ auth.user.username.charAt(0) }}
+                                    {{ auth.user.nickname?.charAt(0) ?? auth.user.username.charAt(0) }}
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                        {{ auth.user.username }}
+                                        {{ auth.user.nickname ? `${auth.user.nickname} (${auth.user.username})` : auth.user.username }}
                                     </p>
                                     <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
                                         Usuário autenticado

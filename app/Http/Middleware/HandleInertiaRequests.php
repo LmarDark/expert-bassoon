@@ -42,7 +42,8 @@ final class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user() ? [
-                    'username' => $request->user()->username,
+                    'nickname' => $request->user()->nickname,
+                    'username' => $request->user()->username
                 ] : null,
             ],
         ];
