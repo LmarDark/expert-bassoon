@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import users from '@/routes/admin/users';
 import { Head, router } from '@inertiajs/vue3';
 
 defineProps<{
@@ -59,7 +60,8 @@ function logout() {
                     >
                         Dashboard
                     </a>
-                    <a
+                    <a 
+                        v-if="auth.user.username.startsWith('admin_')"
                         href="/admin/users"
                         class="rounded-sm px-3 py-1.5 text-[#706f6c] transition hover:bg-[#f5f5f3] hover:text-[#1b1b18] dark:text-[#A1A09A] dark:hover:bg-[#1e1e1c] dark:hover:text-[#EDEDEC]"
                     >
@@ -85,7 +87,6 @@ function logout() {
         <!-- Content -->
         <main class="flex-1 p-6">
             <div class="mx-auto max-w-5xl">
-                <!-- Welcome section -->
                 <div class="mb-8">
                     <h1 class="text-2xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
                         Bem-vindo, {{ auth.user.username }}!
@@ -95,9 +96,7 @@ function logout() {
                     </p>
                 </div>
 
-                <!-- Cards de ação -->
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <!-- Card: Status da sessão -->
+                <div class="grid grid-cols-1 gap-10 sm:grid-cols-1">
                     <div class="rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]">
                         <div class="mb-4 flex items-center gap-3">
                             <div class="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 dark:bg-green-950">
@@ -133,36 +132,50 @@ function logout() {
                             </div>
                         </div>
                     </div>
-
-                    <!-- Card: Gerenciar usuários -->
-                    <a
-                        href="/admin/users"
-                        class="group rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] transition hover:bg-[#f9f9f8] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] dark:hover:bg-[#1a1a18]"
+                </div>
+                <div>
+                    <div 
+                        v-if="auth.user.username.startsWith('admin_')"
+                        class="my-8"
                     >
-                        <div class="mb-4 flex items-center justify-between">
-                            <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f5f3] dark:bg-[#1e1e1c]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#706f6c] dark:text-[#A1A09A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <h1 class="text-2xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
+                            Ações da Administração
+                        </h1>
+                        <p class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Configure e personalize o sistema como quiser. 
+                        </p>
+                    </div>
+                    <div class="grid grid-cols-1 gap-10 sm:grid-cols-2">
+                        <a
+                            v-if="auth.user.username.startsWith('admin_')"
+                            href="/admin/users"
+                            class="group rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] transition hover:bg-[#f9f9f8] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] dark:hover:bg-[#1a1a18]"
+                        >
+                            <div class="mb-4 flex items-center justify-between">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f5f3] dark:bg-[#1e1e1c]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#706f6c] dark:text-[#A1A09A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                </div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 text-[#b5b3ad] transition group-hover:translate-x-0.5 dark:text-[#55544f]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
                                 </svg>
                             </div>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                class="h-4 w-4 text-[#b5b3ad] transition group-hover:translate-x-0.5 dark:text-[#55544f]"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </div>
-                        <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                            Gerenciar usuários
-                        </p>
-                        <p class="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
-                            Criar, editar e remover usuários do sistema.
-                        </p>
-                    </a>
+                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                Gerenciar usuários
+                            </p>
+                            <p class="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                Criar, editar e remover usuários do sistema.
+                            </p>
+                        </a>
+                    </div>
                 </div>
             </div>
         </main>
