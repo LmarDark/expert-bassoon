@@ -9,6 +9,8 @@ type LoginSettings = {
     show_logo: boolean;
     primary_color: string;
     custom_css: string;
+    logo_url: string | null;
+    bg_color: string;
 };
 
 const page = usePage<{ settings: { login: LoginSettings } }>();
@@ -44,11 +46,21 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Login" />
 
-    <div class="flex min-h-screen flex-col items-center justify-center bg-[#FDFDFC] p-6 text-[#1b1b18] dark:bg-[#0a0a0a]">
+    <div
+        class="flex min-h-screen flex-col items-center justify-center p-6 text-[#1b1b18] dark:bg-[#0a0a0a]"
+        :style="settings?.bg_color ? { backgroundColor: settings.bg_color } : { backgroundColor: '#FDFDFC' }"
+    >
         <div class="w-full max-w-md">
             <!-- Logo -->
             <div v-if="settings?.show_logo !== false" class="mb-8 flex justify-center">
+                <img
+                    v-if="settings?.logo_url"
+                    :src="settings.logo_url"
+                    alt="Logo"
+                    class="h-8 object-contain"
+                />
                 <AppLogo
+                    v-else
                     class="h-8"
                     :style="{ color: settings?.primary_color ?? '#F53003' }"
                 />

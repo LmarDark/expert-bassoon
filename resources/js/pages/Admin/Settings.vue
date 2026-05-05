@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
 import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppLogo from '@/components/AppLogo.vue';
 
@@ -10,6 +10,8 @@ type LoginSettings = {
     show_logo: boolean;
     primary_color: string;
     custom_css: string;
+    logo_url: string | null;
+    bg_color: string;
 };
 
 const props = defineProps<{
@@ -26,12 +28,34 @@ const props = defineProps<{
 const page = usePage<{ flash: { success?: string } }>();
 const successMessage = computed(() => page.props.flash?.success);
 
+const logoPreviewUrl = ref<string | null>(props.currentSettings.logo_url);
+
 const form = useForm({
     login_app_name:      props.currentSettings.app_name,
     login_show_logo:     props.currentSettings.show_logo,
     login_primary_color: props.currentSettings.primary_color,
     login_custom_css:    props.currentSettings.custom_css,
+    login_bg_color:      props.currentSettings.bg_color || '#FDFDFC',
+    login_logo:          null as File | null,
+    login_logo_remove:   false,
 });
+
+function onLogoChange(e: Event) {
+    const file = (e.target as HTMLInputElement).files?.[0] ?? null;
+    form.login_logo = file;
+    form.login_logo_remove = false;
+    if (file) {
+        logoPreviewUrl.value = URL.createObjectURL(file);
+    }
+}
+
+function removeLogo() {
+    form.login_logo = null;
+    form.login_logo_remove = true;
+    logoPreviewUrl.value = null;
+    const input = document.getElementById('login_logo') as HTMLInputElement | null;
+    if (input) input.value = '';
+}
 
 function submit() {
     form.put('/admin/settings');
@@ -105,7 +129,7 @@ function submit() {
                                     <!-- Primary color -->
                                     <div class="flex flex-col gap-1.5">
                                         <label for="login_primary_color" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                                            Cor principal (logo)
+                                            Cor principal (logo SVG)
                                         </label>
                                         <div class="flex items-center gap-3">
                                             <input
@@ -126,6 +150,30 @@ function submit() {
                                         <p v-if="form.errors.login_primary_color" class="text-xs text-red-500">{{ form.errors.login_primary_color }}</p>
                                     </div>
 
+                                    <!-- Background color -->
+                                    <div class="flex flex-col gap-1.5">
+                                        <label for="login_bg_color" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                            Cor de fundo da página
+                                        </label>
+                                        <div class="flex items-center gap-3">
+                                            <input
+                                                id="login_bg_color"
+                                                v-model="form.login_bg_color"
+                                                type="color"
+                                                class="h-10 w-14 cursor-pointer rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] p-1 dark:border-[#3E3E3A] dark:bg-[#1a1a18]"
+                                            />
+                                            <input
+                                                v-model="form.login_bg_color"
+                                                type="text"
+                                                placeholder="#FDFDFC"
+                                                maxlength="7"
+                                                class="w-32 rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 font-mono text-sm text-[#1b1b18] outline-none transition placeholder:text-[#b5b3ad] focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:placeholder:text-[#55544f] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
+                                                :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.login_bg_color }"
+                                            />
+                                        </div>
+                                        <p v-if="form.errors.login_bg_color" class="text-xs text-red-500">{{ form.errors.login_bg_color }}</p>
+                                    </div>
+
                                     <!-- Show logo -->
                                     <label class="flex cursor-pointer items-center gap-3">
                                         <div class="relative">
@@ -142,6 +190,53 @@ function submit() {
                                         <span class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Exibir logo na página de login</span>
                                     </label>
                                 </div>
+                            </div>
+
+                            <!-- Logo upload -->
+                            <div class="px-8 py-6">
+                                <h2 class="mb-1 text-sm font-semibold uppercase tracking-wide text-[#706f6c] dark:text-[#A1A09A]">
+                                    Logo personalizada
+                                </h2>
+                                <p class="mb-4 text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                    Substitui o logo SVG padrão. Formatos suportados: PNG, JPG, SVG, WebP (máx. 2 MB).
+                                </p>
+
+                                <!-- Current logo preview -->
+                                <div v-if="logoPreviewUrl" class="mb-3 flex items-center gap-3">
+                                    <img
+                                        :src="logoPreviewUrl"
+                                        alt="Logo atual"
+                                        class="h-12 max-w-[120px] rounded border border-[#e3e3e0] bg-[#f7f7f5] object-contain p-1 dark:border-[#3E3E3A] dark:bg-[#1a1a18]"
+                                    />
+                                    <button
+                                        type="button"
+                                        @click="removeLogo"
+                                        class="inline-flex items-center gap-1.5 rounded-sm border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100 dark:border-red-800 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-900"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Remover logo
+                                    </button>
+                                </div>
+
+                                <label
+                                    for="login_logo"
+                                    class="flex cursor-pointer items-center gap-2 rounded-sm border border-dashed border-[#e3e3e0] bg-[#FDFDFC] px-4 py-3 text-sm text-[#706f6c] transition hover:border-[#1b1b18] hover:text-[#1b1b18] dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#A1A09A] dark:hover:border-[#EDEDEC] dark:hover:text-[#EDEDEC]"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                    </svg>
+                                    {{ logoPreviewUrl ? 'Trocar imagem' : 'Selecionar imagem' }}
+                                </label>
+                                <input
+                                    id="login_logo"
+                                    type="file"
+                                    accept="image/*"
+                                    class="sr-only"
+                                    @change="onLogoChange"
+                                />
+                                <p v-if="form.errors.login_logo" class="mt-1 text-xs text-red-500">{{ form.errors.login_logo }}</p>
                             </div>
 
                             <!-- CSS personalizado -->
@@ -181,10 +276,20 @@ function submit() {
                             Pré-visualização
                         </h2>
                         <div class="overflow-hidden rounded-lg shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d]">
-                            <div class="flex flex-col items-center justify-center bg-[#FDFDFC] p-8 dark:bg-[#0a0a0a]">
+                            <div
+                                class="flex flex-col items-center justify-center p-8"
+                                :style="{ backgroundColor: form.login_bg_color || '#FDFDFC' }"
+                            >
                                 <!-- Logo preview -->
                                 <div v-if="form.login_show_logo" class="mb-6 flex justify-center">
+                                    <img
+                                        v-if="logoPreviewUrl"
+                                        :src="logoPreviewUrl"
+                                        alt="Logo"
+                                        class="h-8 object-contain"
+                                    />
                                     <AppLogo
+                                        v-else
                                         class="h-8"
                                         :style="{ color: form.login_primary_color || '#F53003' }"
                                     />

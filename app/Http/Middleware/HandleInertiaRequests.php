@@ -36,7 +36,7 @@ final class HandleInertiaRequests extends Middleware
             'settings' => fn () => [
                 'login' => rescue(
                     fn () => Setting::loginSettings(),
-                    ['app_name' => 'Sistema de Autenticação', 'show_logo' => true, 'primary_color' => '#F53003', 'custom_css' => ''],
+                    ['app_name' => 'Sistema de Autenticação', 'show_logo' => true, 'primary_color' => '#F53003', 'custom_css' => '', 'logo_url' => null, 'bg_color' => ''],
                 ),
             ],
         ];
