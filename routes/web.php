@@ -29,7 +29,7 @@ Route::get('/auth/check', fn () => auth()->check()
 
 Route::middleware(['universal.auth'])->group(function () {
     Route::inertia(LOGIN_PATH, 'Auth/Login')->name('login');
-    Route::inertia('/dashboard', 'Dashboard')->name('dashboard');
+    Route::inertia('/home', 'Home')->name('home');
 
     // Admin - gerenciamento de usuários (apenas admins)
     Route::prefix('admin')->name('admin.')->middleware('admin')->group(function () {

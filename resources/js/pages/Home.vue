@@ -17,7 +17,7 @@ function logout() {
 </script>
 
 <template>
-    <Head title="Dashboard" />
+    <Head title="Página Inícial" />
 
     <div class="flex min-h-screen flex-col bg-[#FDFDFC] text-[#1b1b18] dark:bg-[#0a0a0a]">
         <!-- Header -->
@@ -57,10 +57,10 @@ function logout() {
                 <div class="h-4 w-px bg-[#e3e3e0] dark:bg-[#3E3E3A]"></div>
                 <nav class="flex items-center gap-1 text-sm">
                     <a
-                        href="/dashboard"
-                        class="rounded-sm bg-[#f5f5f3] px-3 py-1.5 font-medium text-[#1b1b18] dark:bg-[#1e1e1c] dark:text-[#EDEDEC]"
+                        href="/home"
+                        class="rounded-sm sm:text-center bg-[#f5f5f3] px-3 py-1.5 font-medium text-[#1b1b18] dark:bg-[#1e1e1c] dark:text-[#EDEDEC]"
                     >
-                        Dashboard
+                        Página Inícial
                     </a>
                 </nav>
 

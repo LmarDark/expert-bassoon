@@ -28,14 +28,14 @@ final class AuthController extends Controller
 
             $url = $request->input('return_to')
                            ?? session()->pull('url.intended')
-                           ?? route('dashboard');
+                           ?? route('home');
 
             $allowedHost = (string) config('app.allowed_host_redirect', '');
             $host        = parse_url($url, PHP_URL_HOST);
             $isSafe      = $allowedHost !== ''
                 && $host !== null
                 && ($host === $allowedHost || str_ends_with($host, '.' . $allowedHost));
-            $destination = $isSafe ? $url : route('dashboard');
+            $destination = $isSafe ? $url : route('home');
 
             return redirect()->away($destination);
         }

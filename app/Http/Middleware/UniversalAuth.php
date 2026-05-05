@@ -32,7 +32,7 @@ final class UniversalAuth
     private function isAuthenticated(Request $request, Closure $next, bool $isAuthenticated): Response
     {
         if($isAuthenticated && $request->routeIs('login')) {
-            return redirect()->route('dashboard');
+            return redirect()->route('home');
         }
 
         return $next($request);
