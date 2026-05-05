@@ -24,7 +24,7 @@ function logout() {
         <header
             class="flex items-center justify-between border-b border-[#e3e3e0] bg-white px-6 py-4 shadow-sm dark:border-[#3E3E3A] dark:bg-[#161615]"
         >
-            <div class="flex items-center gap-3">
+            <a href="/home" class="flex items-center gap-3">
                 <svg
                     class="h-6 text-[#F53003] dark:text-[#FF4433]"
                     viewBox="0 0 53 54"
@@ -51,31 +51,12 @@ function logout() {
                 <span class="text-sm font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
                     Sistema de Autenticação
                 </span>
-            </div>
+            </a>
 
             <div class="flex items-center gap-4">
-                <div class="h-4 w-px bg-[#e3e3e0] dark:bg-[#3E3E3A]"></div>
-                <nav class="flex items-center gap-1 text-sm">
-                    <a
-                        href="/home"
-                        class="rounded-sm sm:text-center bg-[#f5f5f3] px-3 py-1.5 font-medium text-[#1b1b18] dark:bg-[#1e1e1c] dark:text-[#EDEDEC]"
-                    >
-                        Página Inícial
-                    </a>
-                </nav>
-
-                <div class="h-4 w-px bg-[#e3e3e0] dark:bg-[#3E3E3A]"></div>
-
                 <span class="text-sm text-[#706f6c] dark:text-[#A1A09A]">
                     {{ auth.user.nickname ? `${auth.user.nickname} (${auth.user.username})` : auth.user.username }} 
                 </span>
-                <button
-                    type="button"
-                    class="rounded-sm border border-[#e3e3e0] bg-white px-4 py-1.5 text-sm font-medium text-[#1b1b18] transition hover:bg-[#f5f5f3] dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-[#EDEDEC] dark:hover:bg-[#1e1e1c]"
-                    @click="logout"
-                >
-                    Sair
-                </button>
             </div>
         </header>
 
@@ -103,11 +84,22 @@ function logout() {
                                 <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Sessão ativa</p>
                                 <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Autenticado com sucesso</p>
                             </div>
-                            <div class="ml-auto">
+                            <div class=" flex gap-3 ml-auto">
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-400">
-                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500"></span>
+                                    <span class="h-1.5 w-1.5 animate-ping rounded-full bg-green-500"></span>
+                                    <span class="h-1.5 w-1.5 rounded-full bg-green-500 absolute"></span>
                                     Online
                                 </span>
+
+                                <div class="h-8 w-px bg-[#e3e3e0] dark:bg-[#3E3E3A]"></div>
+                                
+                                <button
+                                    type="button"
+                                    class="rounded-sm border border-[#e3e3e0] bg-white px-4 py-1.5 text-sm font-medium text-[#1b1b18] transition hover:bg-[#f5f5f3] dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-[#EDEDEC] dark:hover:bg-[#1e1e1c]"
+                                    @click="logout"
+                                >
+                                    Deslogar
+                                </button>
                             </div>
                         </div>
 
@@ -129,15 +121,23 @@ function logout() {
                     </div>
                 </div>
                 <div>
-                    <div 
-                        v-if="auth.user.username.startsWith('admin_')"
+                    <div
                         class="my-8"
                     >
                         <h1 class="text-2xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
-                            Ações da Administração
+                            Ações do
+                            <span v-if="auth.user.username.startsWith('admin_')">
+                                Administrador
+                            </span>
+                            <span v-else>
+                                Usuário
+                            </span>
                         </h1>
-                        <p class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                            Configure e personalize o sistema como quiser. 
+                        <p v-if="auth.user.username.startsWith('admin_')" class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Configure, audite e personalize o sistema por completo. 
+                        </p>
+                        <p v-else class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Configure e personalize o que você tiver acesso.
                         </p>
                     </div>
                     <div class="grid grid-cols-1 gap-10 sm:grid-cols-2">
