@@ -31,10 +31,10 @@ final class AuthController extends Controller
                            ?? route('home');
 
             $allowedHost = (string) config('app.allowed_host_redirect', '');
-            $host        = parse_url($url, PHP_URL_HOST);
-            $isSafe      = $allowedHost !== ''
+            $host = parse_url($url, PHP_URL_HOST);
+            $isSafe = $allowedHost !== ''
                 && $host !== null
-                && ($host === $allowedHost || str_ends_with($host, '.' . $allowedHost));
+                && ($host === $allowedHost || str_ends_with($host, '.'.$allowedHost));
             $destination = $isSafe ? $url : route('home');
 
             return redirect()->away($destination);

@@ -30,7 +30,7 @@ describe('SetupController', function () {
                 'password_confirmation' => 'password123',
             ]);
 
-            $response->assertRedirect(route('dashboard'));
+            $response->assertRedirect(route('home'));
             $this->assertAuthenticated();
             expect(User::query()->count())->toBe(1);
             expect(User::query()->first()->is_admin)->toBeTrue();

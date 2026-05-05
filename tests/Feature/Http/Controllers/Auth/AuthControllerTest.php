@@ -64,7 +64,7 @@ describe('AuthController', function () {
                 'password' => 'password123',
             ]);
 
-            $response->assertRedirect(route('dashboard'));
+            $response->assertRedirect(route('home'));
         });
 
         it('redirects to return_to URL when valid and safe', function () {
@@ -94,7 +94,7 @@ describe('AuthController', function () {
                 'return_to' => 'https://malicious.com/phishing',
             ]);
 
-            $response->assertRedirect(route('dashboard'));
+            $response->assertRedirect(route('home'));
         });
 
         it('redirects to dashboard when return_to spoofs allowed host as suffix', function () {
@@ -104,7 +104,7 @@ describe('AuthController', function () {
                 'return_to' => 'https://evilexample.com/page',
             ]);
 
-            $response->assertRedirect(route('dashboard'));
+            $response->assertRedirect(route('home'));
         });
 
         it('redirects to dashboard when allowed_host_redirect is empty', function () {
@@ -116,7 +116,7 @@ describe('AuthController', function () {
                 'return_to' => 'https://app.example.com/page',
             ]);
 
-            $response->assertRedirect(route('dashboard'));
+            $response->assertRedirect(route('home'));
         });
 
         it('uses session intended URL when return_to is not provided', function () {

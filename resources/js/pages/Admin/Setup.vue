@@ -6,6 +6,7 @@ const showPassword = ref(false);
 const showPasswordConfirmation = ref(false);
 
 const form = useForm({
+    nickname: '',
     username: '',
     password: '',
     password_confirmation: '',
@@ -61,23 +62,29 @@ function submit() {
                 </p>
 
                 <form @submit.prevent="submit" class="flex flex-col gap-5">
-                    <!-- Usuário -->
-                     <div class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-800 dark:bg-amber-950">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600 dark:text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                        <div>
-                            <p class="text-sm font-medium text-amber-800 dark:text-amber-300">
-                                Atenção - Campo Usuário administrador
-                            </p>
-                            <p class="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
-                                O nome terá um prefixo "admin_".
-                            </p>
-                        </div>
+                    <!-- Apelido (opcional) -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="nickname" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                            Apelido <span class="text-[#706f6c] dark:text-[#A1A09A]">(Opcional)</span>
+                        </label>
+                        <input
+                            id="nickname"
+                            v-model="form.nickname"
+                            type="text"
+                            autocomplete="nickname"
+                            placeholder="Geraldo José"
+                            class="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 text-sm text-[#1b1b18] outline-none transition placeholder:text-[#b5b3ad] focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] disabled:opacity-50 dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:placeholder:text-[#55544f] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
+                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.nickname }"
+                        />
+                        <p v-if="form.errors.nickname" class="text-xs text-red-500">
+                            {{ form.errors.nickname }}
+                        </p>
                     </div>
+
+                    <!-- Usuário -->
                     <div class="flex flex-col gap-1.5">
                         <label for="username" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
-                            Usuário administrador
+                            Usuário
                             <span class="ml-0.5 text-red-500">*</span>
                         </label>
                         <input
@@ -86,7 +93,7 @@ function submit() {
                             type="text"
                             autocomplete="username"
                             required
-                            placeholder="Ex: admin"
+                            placeholder="4023567"
                             class="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 text-sm text-[#1b1b18] outline-none transition placeholder:text-[#b5b3ad] focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] disabled:opacity-50 dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:placeholder:text-[#55544f] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
                             :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.username }"
                         />

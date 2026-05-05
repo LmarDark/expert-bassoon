@@ -23,6 +23,7 @@ final class SetupController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
+            'nickname' => ['nullable', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
@@ -33,7 +34,8 @@ final class SetupController extends Controller
             }
 
             return User::query()->create([
-                'username' => "admin_" . $validated['username'],
+                'nickname' => $validated['nickname'] ?? null,
+                'username' => $validated['username'],
                 'password' => $validated['password'],
                 'is_admin' => true,
             ]);

@@ -29,8 +29,8 @@ final class UserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'username'  => ['required', 'string', 'max:255', 'unique:users,username'],
-            'password'  => ['required', 'string', 'min:8', 'confirmed'],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
         ]);
 
         User::query()->create($validated);
@@ -49,7 +49,7 @@ final class UserController extends Controller
     public function update(Request $request, User $user): RedirectResponse
     {
         $validated = $request->validate([
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id],
+            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$user->id],
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
         ]);
 

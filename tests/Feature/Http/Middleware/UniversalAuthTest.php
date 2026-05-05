@@ -11,13 +11,13 @@ describe('UniversalAuth Middleware', function () {
 
             $response = $this->actingAs($user)->get(route('login'));
 
-            $response->assertRedirect(route('dashboard'));
+            $response->assertRedirect(route('home'));
         });
 
         it('allows access to dashboard', function () {
             $user = User::factory()->create();
 
-            $response = $this->actingAs($user)->get(route('dashboard'));
+            $response = $this->actingAs($user)->get(route('home'));
 
             $response->assertOk();
         });
@@ -30,7 +30,7 @@ describe('UniversalAuth Middleware', function () {
         });
 
         it('redirects to login when accessing dashboard', function () {
-            $response = $this->get(route('dashboard'));
+            $response = $this->get(route('home'));
 
             $response->assertRedirect();
             expect($response->headers->get('Location'))->toContain('login');
@@ -43,7 +43,7 @@ describe('UniversalAuth Middleware', function () {
         });
 
         it('includes return_to parameter when redirecting to login', function () {
-            $response = $this->get(route('dashboard'));
+            $response = $this->get(route('home'));
 
             expect($response->headers->get('Location'))->toContain('return_to');
         });

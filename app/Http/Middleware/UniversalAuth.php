@@ -22,7 +22,7 @@ final class UniversalAuth
     {
         $this->isAuthenticated = Auth::check();
 
-        if(!$this->isAuthenticated) {
+        if (! $this->isAuthenticated) {
             return $this->isNotAuthenticated($request, $next, $this->isAuthenticated);
         }
 
@@ -31,7 +31,7 @@ final class UniversalAuth
 
     private function isAuthenticated(Request $request, Closure $next, bool $isAuthenticated): Response
     {
-        if($isAuthenticated && $request->routeIs('login')) {
+        if ($isAuthenticated && $request->routeIs('login')) {
             return redirect()->route('home');
         }
 

@@ -13,7 +13,7 @@ describe('CheckFirstSetup Middleware', function () {
         });
 
         it('redirects to setup when accessing dashboard', function () {
-            $response = $this->get(route('dashboard'));
+            $response = $this->get(route('home'));
 
             $response->assertRedirect(route('setup'));
         });

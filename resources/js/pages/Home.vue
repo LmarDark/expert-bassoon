@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import users from '@/routes/admin/users';
 import { Head, router } from '@inertiajs/vue3';
 
 defineProps<{
@@ -7,6 +6,7 @@ defineProps<{
         user: {
             username: string;
             nickname?: string;
+            is_admin: boolean;
         };
     };
 }>();
@@ -96,22 +96,12 @@ function logout() {
                                 <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">Sessão ativa</p>
                                 <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">Autenticado com sucesso</p>
                             </div>
-                            <div class=" flex gap-3 ml-auto">
+                            <div class="flex gap-3 ml-auto">
                                 <span class="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900 dark:text-green-400">
                                     <span class="h-1.5 w-1.5 animate-ping rounded-full bg-green-500"></span>
                                     <span class="h-1.5 w-1.5 rounded-full bg-green-500 absolute"></span>
                                     Online
                                 </span>
-
-                                <div class="h-8 w-px bg-[#e3e3e0] dark:bg-[#3E3E3A]"></div>
-                                
-                                <button
-                                    type="button"
-                                    class="rounded-sm border border-[#e3e3e0] bg-white px-4 py-1.5 text-sm font-medium text-[#1b1b18] transition hover:bg-[#f5f5f3] dark:border-[#3E3E3A] dark:bg-[#161615] dark:text-[#EDEDEC] dark:hover:bg-[#1e1e1c]"
-                                    @click="logout"
-                                >
-                                    Deslogar
-                                </button>
                             </div>
                         </div>
 
@@ -138,23 +128,55 @@ function logout() {
                     >
                         <h1 class="text-2xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
                             Ações do
-                            <span v-if="auth.user.username.startsWith('admin_')">
+                            <span v-if="auth.user.is_admin">
                                 Administrador
                             </span>
                             <span v-else>
                                 Usuário
                             </span>
                         </h1>
-                        <p v-if="auth.user.username.startsWith('admin_')" class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                            Configure, audite e personalize o sistema por completo. 
+                        <p v-if="auth.user.is_admin" class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+                            Configure, audite e personalize o sistema por completo.
                         </p>
                         <p v-else class="mt-1 text-sm text-[#706f6c] dark:text-[#A1A09A]">
                             Configure e personalize o que você tiver acesso.
                         </p>
                     </div>
+
                     <div class="grid grid-cols-1 gap-10 sm:grid-cols-2">
+                        <!-- Auditoria -->
                         <a
-                            v-if="auth.user.username.startsWith('admin_')"
+                            href="/admin/users"
+                            class="group rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] transition hover:bg-[#f9f9f8] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] dark:hover:bg-[#1a1a18]"
+                        >
+                            <div class="mb-4 flex items-center justify-between">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f5f3] dark:bg-[#1e1e1c]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#706f6c] dark:text-[#A1A09A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                </div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 text-[#b5b3ad] transition group-hover:translate-x-0.5 dark:text-[#55544f]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                Auditoria
+                            </p>
+                            <p class="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                Monitoramento geral da aplicação.
+                            </p>
+                        </a>
+
+                        <!-- Gerenciar usuários (admin) -->
+                        <a
+                            v-if="auth.user.is_admin"
                             href="/admin/users"
                             class="group rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] transition hover:bg-[#f9f9f8] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] dark:hover:bg-[#1a1a18]"
                         >
@@ -180,6 +202,67 @@ function logout() {
                             </p>
                             <p class="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
                                 Criar, editar e remover usuários do sistema.
+                            </p>
+                        </a>
+
+                        <!-- Personalizar aplicação (admin) -->
+                        <a
+                            v-if="auth.user.is_admin"
+                            href="/admin/users"
+                            class="group rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] transition hover:bg-[#f9f9f8] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] dark:hover:bg-[#1a1a18]"
+                        >
+                            <div class="mb-4 flex items-center justify-between">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f5f3] dark:bg-[#1e1e1c]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#706f6c] dark:text-[#A1A09A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                </div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 text-[#b5b3ad] transition group-hover:translate-x-0.5 dark:text-[#55544f]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                Personalizar aplicação
+                            </p>
+                            <p class="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                Alterar aparência global do sistema.
+                            </p>
+                        </a>
+
+                        <!-- Configurar perfil -->
+                        <a
+                            href="/admin/users"
+                            class="group rounded-lg bg-white p-6 shadow-[inset_0px_0px_0px_1px_rgba(26,26,0,0.16)] transition hover:bg-[#f9f9f8] dark:bg-[#161615] dark:shadow-[inset_0px_0px_0px_1px_#fffaed2d] dark:hover:bg-[#1a1a18]"
+                        >
+                            <div class="mb-4 flex items-center justify-between">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-[#f5f5f3] dark:bg-[#1e1e1c]">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-[#706f6c] dark:text-[#A1A09A]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 text-[#b5b3ad] transition group-hover:translate-x-0.5 dark:text-[#55544f]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                            <p class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                                Configurar perfil
+                            </p>
+                            <p class="mt-0.5 text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                Configure e personalize o seu perfil.
                             </p>
                         </a>
                     </div>
