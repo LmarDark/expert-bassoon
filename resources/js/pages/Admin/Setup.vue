@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 
 const showPassword = ref(false);
 const showPasswordConfirmation = ref(false);
 
 const form = useForm({
     nickname: '',
+    validation_type: 'cpf' as 'cpf' | 'celular' | 'personalizado',
+    custom_pattern: '',
     username: '',
     password: '',
     password_confirmation: '',
@@ -15,6 +17,58 @@ const form = useForm({
 function submit() {
     form.post('/setup');
 }
+
+function isValidCpf(value: string): boolean {
+    const cpf = value.replace(/[^0-9]/g, '');
+    if (cpf.length !== 11 || new Set(cpf.split('')).size === 1) return false;
+    for (let t = 9; t < 11; t++) {
+        let sum = 0;
+        for (let i = 0; i < t; i++) sum += Number(cpf[i]) * (t + 1 - i);
+        const digit = ((sum * 10) % 11) % 10;
+        if (Number(cpf[t]) !== digit) return false;
+    }
+    return true;
+}
+
+function isValidCelular(value: string): boolean {
+    return /^\(?\d{2}\)?\s?9\d{4}[\s-]?\d{4}$/.test(value);
+}
+
+const usernamePlaceholder = computed<string>(() => {
+    if (form.validation_type === 'cpf') return '000.000.000-00';
+    if (form.validation_type === 'celular') return '(00) 90000-0000';
+    return 'Seu usuário';
+});
+
+const clientUsernameError = computed<string | null>(() => {
+    if (!form.username) return null;
+    if (form.validation_type === 'cpf' && !isValidCpf(form.username)) {
+        return 'CPF inválido.';
+    }
+    if (form.validation_type === 'celular' && !isValidCelular(form.username)) {
+        return 'Número de celular inválido. Ex: (00) 90000-0000';
+    }
+    if (form.validation_type === 'personalizado' && form.custom_pattern) {
+        try {
+            if (!new RegExp(form.custom_pattern).test(form.username)) {
+                return 'O usuário não corresponde ao padrão personalizado.';
+            }
+        } catch {
+            // regex inválido, pular validação no frontend
+        }
+    }
+    return null;
+});
+
+const customPatternError = computed<string | null>(() => {
+    if (form.validation_type !== 'personalizado' || !form.custom_pattern) return null;
+    try {
+        new RegExp(form.custom_pattern);
+        return null;
+    } catch {
+        return 'Expressão regular inválida.';
+    }
+});
 </script>
 
 <template>
@@ -81,6 +135,52 @@ function submit() {
                         </p>
                     </div>
 
+                    <!-- Tipo de validação -->
+                    <div class="flex flex-col gap-1.5">
+                        <label for="validation_type" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                            Tipo de validação do usuário
+                            <span class="ml-0.5 text-red-500">*</span>
+                        </label>
+                        <select
+                            id="validation_type"
+                            v-model="form.validation_type"
+                            class="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 text-sm text-[#1b1b18] outline-none transition focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
+                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.validation_type }"
+                        >
+                            <option value="cpf">CPF</option>
+                            <option value="celular">Celular</option>
+                            <option value="personalizado">Personalizado</option>
+                        </select>
+                        <p v-if="form.errors.validation_type" class="text-xs text-red-500">
+                            {{ form.errors.validation_type }}
+                        </p>
+                    </div>
+
+                    <!-- Padrão personalizado (apenas quando "personalizado" está selecionado) -->
+                    <div v-if="form.validation_type === 'personalizado'" class="flex flex-col gap-1.5">
+                        <label for="custom_pattern" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
+                            Expressão regular
+                            <span class="ml-0.5 text-red-500">*</span>
+                        </label>
+                        <input
+                            id="custom_pattern"
+                            v-model="form.custom_pattern"
+                            type="text"
+                            placeholder="Ex: ^\d{5}$"
+                            class="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 text-sm font-mono text-[#1b1b18] outline-none transition placeholder:text-[#b5b3ad] focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] disabled:opacity-50 dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:placeholder:text-[#55544f] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
+                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.custom_pattern || customPatternError }"
+                        />
+                        <p v-if="form.errors.custom_pattern" class="text-xs text-red-500">
+                            {{ form.errors.custom_pattern }}
+                        </p>
+                        <p v-else-if="customPatternError" class="text-xs text-red-500">
+                            {{ customPatternError }}
+                        </p>
+                        <p v-else class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                            Insira uma expressão regular para validar o campo usuário.
+                        </p>
+                    </div>
+
                     <!-- Usuário -->
                     <div class="flex flex-col gap-1.5">
                         <label for="username" class="text-sm font-medium text-[#1b1b18] dark:text-[#EDEDEC]">
@@ -93,12 +193,15 @@ function submit() {
                             type="text"
                             autocomplete="username"
                             required
-                            placeholder="4023567"
+                            :placeholder="usernamePlaceholder"
                             class="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 text-sm text-[#1b1b18] outline-none transition placeholder:text-[#b5b3ad] focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] disabled:opacity-50 dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:placeholder:text-[#55544f] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
-                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.username }"
+                            :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.username || (!form.errors.username && !!clientUsernameError) }"
                         />
                         <p v-if="form.errors.username" class="text-xs text-red-500">
                             {{ form.errors.username }}
+                        </p>
+                        <p v-else-if="clientUsernameError" class="text-xs text-red-500">
+                            {{ clientUsernameError }}
                         </p>
                     </div>
 
