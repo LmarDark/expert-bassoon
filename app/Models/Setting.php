@@ -25,7 +25,9 @@ final class Setting extends Model
 
     public static function get(string $key, ?string $default = null): ?string
     {
-        return self::find($key)?->value ?? $default;
+        $value = self::query()->where('key', $key)->value('value');
+
+        return is_string($value) ? $value : $default;
     }
 
     public static function set(string $key, ?string $value): void

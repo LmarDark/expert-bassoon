@@ -21,6 +21,7 @@ final class ActivityLog extends Model
 
     protected $fillable = ['actor_id', 'event', 'target_username', 'ip_address'];
 
+    /** @return BelongsTo<User, $this> */
     public function actor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'actor_id');

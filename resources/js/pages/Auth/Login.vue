@@ -47,8 +47,8 @@ onBeforeUnmount(() => {
     <Head title="Login" />
 
     <div
-        class="flex min-h-screen flex-col items-center justify-center p-6 text-[#1b1b18] dark:bg-[#0a0a0a]"
-        :style="settings?.bg_color ? { backgroundColor: settings.bg_color } : { backgroundColor: '#FDFDFC' }"
+        class="flex min-h-screen flex-col items-center justify-center p-6 text-[#1b1b18] bg-[#FDFDFC] dark:bg-[#0a0a0a]"
+        :style="settings?.bg_color ? { backgroundColor: settings.bg_color } : {}"
     >
         <div class="w-full max-w-md">
             <!-- Logo -->
