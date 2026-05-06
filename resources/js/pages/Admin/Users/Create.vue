@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppHeader from '@/components/AppHeader.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
 
-defineProps<{
+const props = defineProps<{
     auth: {
         user: {
             username: string;
@@ -11,7 +12,25 @@ defineProps<{
             is_admin: boolean;
         };
     };
+    usernameValidationType: string;
 }>();
+
+const usernameHint = computed(() => {
+    switch (props.usernameValidationType) {
+        case 'cpf':           return 'Informe um CPF válido (Ex: 000.000.000-00)';
+        case 'celular':       return 'Informe um celular válido (Ex: (00) 90000-0000)';
+        case 'personalizado': return 'Siga o padrão de usuário definido no sistema';
+        default:              return '';
+    }
+});
+
+const usernamePlaceholder = computed(() => {
+    switch (props.usernameValidationType) {
+        case 'cpf':    return '000.000.000-00';
+        case 'celular': return '(00) 90000-0000';
+        default:       return 'Ex: joaosilva';
+    }
+});
 
 const form = useForm({
     nickname:              '',
@@ -76,10 +95,13 @@ function submit() {
                                         v-model="form.username"
                                         type="text"
                                         required
-                                        placeholder="Ex: joaosilva"
+                                        :placeholder="usernamePlaceholder"
                                         class="w-full rounded-sm border border-[#e3e3e0] bg-[#FDFDFC] px-3 py-2 text-sm text-[#1b1b18] outline-none transition placeholder:text-[#b5b3ad] focus:border-[#1b1b18] focus:ring-1 focus:ring-[#1b1b18] dark:border-[#3E3E3A] dark:bg-[#1a1a18] dark:text-[#EDEDEC] dark:placeholder:text-[#55544f] dark:focus:border-[#EDEDEC] dark:focus:ring-[#EDEDEC]"
                                         :class="{ 'border-red-500 focus:border-red-500 focus:ring-red-500': form.errors.username }"
                                     />
+                                    <p v-if="usernameHint && !form.errors.username" class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                        {{ usernameHint }}
+                                    </p>
                                     <p v-if="form.errors.username" class="text-xs text-red-500">
                                         {{ form.errors.username }}
                                     </p>

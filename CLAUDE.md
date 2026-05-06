@@ -29,7 +29,7 @@ composer run test                       # config:clear + lint:check + tests
 ```bash
 composer run lint          # Fix PHP style with Pint (parallel)
 composer run lint:check    # Check PHP style without modifying
-composer run analyse       # PHPStan level 6 via Larastan
+composer run analyse       # PHPStan level 6 via Larastan (config: phpstan.neon)
 pnpm run lint              # Fix ESLint issues
 pnpm run lint:check        # Check ESLint without modifying
 pnpm run format            # Format with Prettier
@@ -86,9 +86,11 @@ app/
 │   └── Requests/Auth/LoginRequest.php
 ├── Models/
 │   ├── ActivityLog.php  # Immutable event log (actor_id, event, target_username, ip_address)
-│   ├── Setting.php      # Key-value settings store; use Setting::loginSettings() to read all login settings at once
+│   ├── Setting.php      # Key-value settings store; use Setting::loginSettings() for login settings, Setting::usernameValidation() for username validation config
 │   └── User.php         # username (unique), nickname, password (hashed), is_admin
-└── Services/Auth/AuthService.php        # Wraps Auth::attempt()
+└── Services/Auth/
+    ├── AuthService.php              # Wraps Auth::attempt()
+    └── UsernameValidationService.php  # Builds Laravel validation rules for CPF / Celular / Personalizado (regex)
 ```
 
 #### Activity log events
@@ -101,6 +103,7 @@ app/
 | `user_created` | UserController |
 | `user_updated` | UserController |
 | `user_deleted` | UserController |
+| `profile_updated` | ProfileController |
 
 #### Login page settings (stored in `settings` table)
 
@@ -111,7 +114,16 @@ app/
 | `login_primary_color` | `#F53003` | SVG logo color (hex) |
 | `login_custom_css` | `""` | CSS injected only on the login page |
 | `login_logo_path` | `null` | Path in `storage/app/public/logos/` for custom logo image |
-| `login_bg_color` | `""` | Login page background color (hex); falls back to `#FDFDFC` when empty |
+| `login_bg_color` | `""` | Login page background color (hex); falls back to Tailwind class `bg-[#FDFDFC]` when empty |
+
+#### Username validation settings (stored in `settings` table)
+
+| Key | Values | Description |
+|-----|--------|-------------|
+| `username_validation_type` | `cpf`, `celular`, `personalizado`, `""` | Format enforced on username at creation/update |
+| `username_custom_pattern` | regex string | Used when type is `personalizado` |
+
+Saved by `SetupController` after first-run setup. Read by `Setting::usernameValidation()` and applied via `UsernameValidationService::buildRules()` in both `UserController::store()` and `UserController::update()`. The current type is also passed to `Create.vue` and `Edit.vue` as `usernameValidationType` prop so the form shows an appropriate hint.
 
 Settings are shared globally via `HandleInertiaRequests` under `settings.login`. The `Login.vue` reads them via `usePage()`. Custom CSS is injected programmatically via `onMounted` (not via `<style>` tag) to avoid HTML encoding issues.
 

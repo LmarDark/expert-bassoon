@@ -54,7 +54,20 @@ describe('UserController', function () {
             $response = $this->actingAs($this->admin)->get(route('admin.users.create'));
 
             $response->assertOk();
-            $response->assertInertia(fn ($page) => $page->component('Admin/Users/Create'));
+            $response->assertInertia(fn ($page) => $page
+                ->component('Admin/Users/Create')
+                ->has('usernameValidationType')
+            );
+        });
+
+        it('passes the configured username validation type to the view', function () {
+            Setting::set('username_validation_type', 'cpf');
+
+            $response = $this->actingAs($this->admin)->get(route('admin.users.create'));
+
+            $response->assertInertia(fn ($page) => $page
+                ->where('usernameValidationType', 'cpf')
+            );
         });
     });
 
@@ -186,6 +199,7 @@ describe('UserController', function () {
                 ->where('user.username', $target->username)
                 ->has('user.is_admin')
                 ->has('user.nickname')
+                ->has('usernameValidationType')
             );
         });
     });
@@ -293,6 +307,18 @@ describe('UserController', function () {
             ]);
 
             $response->assertRedirect(route('admin.users.index'));
+        });
+
+        it('validates username with cpf rule from settings on update', function () {
+            Setting::set('username_validation_type', 'cpf');
+            $target = User::factory()->create();
+
+            $response = $this->actingAs($this->admin)->put(route('admin.users.update', $target), [
+                'username' => '111.111.111-11',
+                'is_admin' => $target->is_admin,
+            ]);
+
+            $response->assertSessionHasErrors('username');
         });
 
         it('logs user_updated activity', function () {

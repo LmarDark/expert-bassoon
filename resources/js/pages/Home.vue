@@ -88,6 +88,7 @@ defineProps<{
 
                     <div class="grid grid-cols-1 gap-10 sm:grid-cols-2">
                         <ActionCard
+                            v-if="auth.user.is_admin"
                             href="/admin/audit"
                             title="Auditoria"
                             description="Monitoramento geral da aplicação."

@@ -27,7 +27,9 @@ final class UserController extends Controller
 
     public function create(): Response
     {
-        return Inertia::render('Admin/Users/Create');
+        return Inertia::render('Admin/Users/Create', [
+            'usernameValidationType' => Setting::usernameValidation()['type'],
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -67,14 +69,21 @@ final class UserController extends Controller
     {
         return Inertia::render('Admin/Users/Edit', [
             'user' => $user->only('id', 'username', 'nickname', 'is_admin', 'created_at'),
+            'usernameValidationType' => Setting::usernameValidation()['type'],
         ]);
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        $validation = Setting::usernameValidation();
+        $usernameRules = [
+            'required', 'string', 'max:255', 'unique:users,username,'.$user->id,
+            ...UsernameValidationService::buildRules($validation['type'], $validation['custom_pattern']),
+        ];
+
         $validated = $request->validate([
             'nickname' => ['nullable', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,'.$user->id],
+            'username' => $usernameRules,
             'password' => ['nullable', 'string', 'min:8', 'confirmed'],
             'is_admin' => ['required', 'boolean'],
         ]);
