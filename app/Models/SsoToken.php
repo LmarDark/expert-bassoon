@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\SsoTokenFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -19,18 +21,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 final class SsoToken extends Model
 {
-    protected $fillable = ['jti', 'user_id', 'app_id', 'expires_at', 'used_at'];
+    /** @use HasFactory<SsoTokenFactory> */
+    use HasFactory;
 
-    /**
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'expires_at' => 'datetime',
-            'used_at'    => 'datetime',
-        ];
-    }
+    protected $fillable = ['jti', 'user_id', 'app_id', 'expires_at', 'used_at'];
 
     /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
@@ -52,5 +46,16 @@ final class SsoToken extends Model
     public function isUsed(): bool
     {
         return $this->used_at !== null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'expires_at' => 'datetime',
+            'used_at' => 'datetime',
+        ];
     }
 }

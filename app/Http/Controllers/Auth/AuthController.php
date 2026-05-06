@@ -7,6 +7,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Models\ActivityLog;
+use App\Models\App;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
@@ -38,12 +39,8 @@ final class AuthController extends Controller
                            ?? session()->pull('url.intended')
                            ?? route('home');
 
-            $allowedHost = (string) config('app.allowed_host_redirect', '');
             $host = parse_url($url, PHP_URL_HOST);
-            $isSafe = $allowedHost !== ''
-                && $host !== null
-                && ($host === $allowedHost || str_ends_with($host, '.'.$allowedHost));
-            $destination = $isSafe ? $url : route('home');
+            $destination = is_string($host) && $this->isAllowedHost($host) ? $url : route('home');
 
             return redirect()->away($destination);
         }
@@ -78,5 +75,18 @@ final class AuthController extends Controller
         ]);
 
         return redirect()->route('login');
+    }
+
+    private function isAllowedHost(string $host): bool
+    {
+        $allowedHost = (string) config('app.allowed_host_redirect', '');
+        if ($allowedHost !== '' && ($host === $allowedHost || str_ends_with($host, '.'.$allowedHost))) {
+            return true;
+        }
+
+        return App::query()
+            ->where('active', true)
+            ->get(['allowed_domains'])
+            ->contains(fn (App $app) => $app->isAllowedDomain($host));
     }
 }

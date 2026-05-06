@@ -29,18 +29,18 @@ final class AppController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'            => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'allowed_domains' => ['required', 'string'],
-            'callback_url'    => ['nullable', 'url', 'max:500'],
-            'active'          => ['nullable', 'boolean'],
+            'callback_url' => ['nullable', 'url', 'max:500'],
+            'active' => ['nullable', 'boolean'],
         ]);
 
         App::query()->create([
-            'name'            => $validated['name'],
-            'api_key'         => App::generateApiKey(),
+            'name' => $validated['name'],
+            'api_key' => App::generateApiKey(),
             'allowed_domains' => self::parseDomains($validated['allowed_domains']),
-            'callback_url'    => ($validated['callback_url'] ?? '') ?: null,
-            'active'          => (bool) ($validated['active'] ?? true),
+            'callback_url' => ($validated['callback_url'] ?? '') ?: null,
+            'active' => (bool) ($validated['active'] ?? true),
         ]);
 
         return redirect()->route('admin.apps.index')
@@ -57,16 +57,16 @@ final class AppController extends Controller
     public function update(Request $request, App $app): RedirectResponse
     {
         $validated = $request->validate([
-            'name'            => ['required', 'string', 'max:255'],
+            'name' => ['required', 'string', 'max:255'],
             'allowed_domains' => ['required', 'string'],
-            'callback_url'    => ['nullable', 'url', 'max:500'],
-            'active'          => ['required', 'boolean'],
+            'callback_url' => ['nullable', 'url', 'max:500'],
+            'active' => ['required', 'boolean'],
         ]);
 
-        $app->name            = $validated['name'];
+        $app->name = $validated['name'];
         $app->allowed_domains = self::parseDomains($validated['allowed_domains']);
-        $app->callback_url    = ($validated['callback_url'] ?? '') ?: null;
-        $app->active          = $validated['active'];
+        $app->callback_url = ($validated['callback_url'] ?? '') ?: null;
+        $app->active = $validated['active'];
         $app->save();
 
         return redirect()->route('admin.apps.index')

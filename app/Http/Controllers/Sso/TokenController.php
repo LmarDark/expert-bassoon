@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Sso;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\App;
 use App\Models\SsoToken;
 use App\Services\Auth\JwtService;
@@ -12,6 +13,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use RuntimeException;
 
@@ -41,24 +43,24 @@ final class TokenController extends Controller
         }
 
         $user = $request->user();
-        $jti  = Str::random(32);
+        $jti = Str::random(32);
 
         SsoToken::query()->create([
-            'jti'        => $jti,
-            'user_id'    => $user->id,
-            'app_id'     => $app->id,
+            'jti' => $jti,
+            'user_id' => $user->id,
+            'app_id' => $app->id,
             'expires_at' => now()->addSeconds(120),
         ]);
 
         $token = JwtService::encode([
-            'sub'      => $user->username,
-            'user_id'  => $user->id,
+            'sub' => $user->username,
+            'user_id' => $user->id,
             'nickname' => $user->nickname,
             'is_admin' => $user->is_admin,
-            'app'      => $app->name,
-            'jti'      => $jti,
-            'iat'      => now()->unix(),
-            'exp'      => now()->addSeconds(120)->unix(),
+            'app' => $app->name,
+            'jti' => $jti,
+            'iat' => now()->unix(),
+            'exp' => now()->addSeconds(120)->unix(),
         ], $app->api_key);
 
         $separator = str_contains($redirect, '?') ? '&' : '?';
@@ -66,10 +68,43 @@ final class TokenController extends Controller
         return redirect()->away("{$redirect}{$separator}sso_token={$token}");
     }
 
+    public function logout(Request $request): RedirectResponse
+    {
+        $actorId = Auth::id();
+        $username = Auth::user()?->username;
+
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        $redirect = (string) $request->query('redirect', '');
+        $host = $redirect !== '' ? parse_url($redirect, PHP_URL_HOST) : null;
+
+        $app = null;
+        if ($request->query('app') !== null) {
+            $app = App::query()
+                ->where('api_key', $request->query('app'))
+                ->where('active', true)
+                ->first();
+        }
+
+        $isSafe = is_string($host) && $app instanceof App && $app->isAllowedDomain($host);
+        $destination = $isSafe ? $redirect : route('login');
+
+        ActivityLog::create([
+            'actor_id' => $actorId,
+            'event' => 'logout',
+            'target_username' => $username,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()->away($destination);
+    }
+
     public function validate(Request $request): JsonResponse
     {
         $request->validate([
-            'token'   => ['required', 'string'],
+            'token' => ['required', 'string'],
             'api_key' => ['required', 'string'],
         ]);
 
@@ -117,9 +152,9 @@ final class TokenController extends Controller
         $ssoToken->save();
 
         return response()->json([
-            'valid'    => true,
-            'user'     => [
-                'id'       => $payload['user_id'] ?? null,
+            'valid' => true,
+            'user' => [
+                'id' => $payload['user_id'] ?? null,
                 'username' => $payload['sub'] ?? null,
                 'nickname' => $payload['nickname'] ?? null,
                 'is_admin' => $payload['is_admin'] ?? false,

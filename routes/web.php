@@ -36,8 +36,9 @@ Route::get('/auth/check', fn () => auth()->check()
 // Health check
 Route::get('/health', HealthController::class)->name('health');
 
-// SSO JWT (cross-domain) — token requer sessão ativa; validate é público para apps backend
+// SSO JWT (cross-domain) — validate e logout são públicos; token requer sessão ativa
 Route::post('/sso/validate', [TokenController::class, 'validate'])->name('sso.validate');
+Route::get('/sso/logout', [TokenController::class, 'logout'])->name('sso.logout');
 
 Route::middleware(['universal.auth'])->group(function () {
     Route::inertia(LOGIN_PATH, 'Auth/Login')->name('login');

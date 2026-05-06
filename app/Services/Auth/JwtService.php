@@ -8,29 +8,13 @@ use RuntimeException;
 
 final class JwtService
 {
-    private static function base64UrlEncode(string $data): string
-    {
-        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
-    }
-
-    private static function base64UrlDecode(string $data): string
-    {
-        $decoded = base64_decode(strtr($data, '-_', '+/'), true);
-
-        if ($decoded === false) {
-            throw new RuntimeException('Invalid base64url encoding.');
-        }
-
-        return $decoded;
-    }
-
     /**
-     * @param array<string, mixed> $payload
+     * @param  array<string, mixed>  $payload
      */
     public static function encode(array $payload, string $secret): string
     {
-        $header    = self::base64UrlEncode((string) json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
-        $body      = self::base64UrlEncode((string) json_encode($payload));
+        $header = self::base64UrlEncode((string) json_encode(['typ' => 'JWT', 'alg' => 'HS256']));
+        $body = self::base64UrlEncode((string) json_encode($payload));
         $signature = self::base64UrlEncode(hash_hmac('sha256', "{$header}.{$body}", $secret, true));
 
         return "{$header}.{$body}.{$signature}";
@@ -61,6 +45,22 @@ final class JwtService
 
         if (! is_array($decoded)) {
             throw new RuntimeException('Invalid JWT payload.');
+        }
+
+        return $decoded;
+    }
+
+    private static function base64UrlEncode(string $data): string
+    {
+        return mb_rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    private static function base64UrlDecode(string $data): string
+    {
+        $decoded = base64_decode(strtr($data, '-_', '+/'), true);
+
+        if ($decoded === false) {
+            throw new RuntimeException('Invalid base64url encoding.');
         }
 
         return $decoded;

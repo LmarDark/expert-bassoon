@@ -23,8 +23,8 @@ final class HealthController extends Controller
         $status = $dbStatus === 'ok' ? 200 : 503;
 
         return response()->json([
-            'status'    => $dbStatus === 'ok' ? 'ok' : 'degraded',
-            'database'  => $dbStatus,
+            'status' => $dbStatus === 'ok' ? 'ok' : 'degraded',
+            'database' => $dbStatus,
             'timestamp' => now()->toIso8601String(),
         ], $status);
     }

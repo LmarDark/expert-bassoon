@@ -19,7 +19,9 @@ final class CheckFirstSetup
     {
         $hasUsers = User::query()->exists();
 
-        if (! $hasUsers && ! $request->routeIs('setup', 'setup.store')) {
+        $bypass = ['setup', 'setup.store', 'health', 'auth.check', 'sso.validate', 'sso.logout'];
+
+        if (! $hasUsers && ! $request->routeIs(...$bypass)) {
             return redirect()->route('setup');
         }
 

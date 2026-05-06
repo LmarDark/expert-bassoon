@@ -27,17 +27,6 @@ final class App extends Model
 
     protected $fillable = ['name', 'api_key', 'allowed_domains', 'callback_url', 'active'];
 
-    /**
-     * @return array<string, string>
-     */
-    protected function casts(): array
-    {
-        return [
-            'allowed_domains' => 'array',
-            'active'          => 'boolean',
-        ];
-    }
-
     public static function generateApiKey(): string
     {
         return Str::random(64);
@@ -58,5 +47,16 @@ final class App extends Model
         }
 
         return false;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'allowed_domains' => 'array',
+            'active' => 'boolean',
+        ];
     }
 }
