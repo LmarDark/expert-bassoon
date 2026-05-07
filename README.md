@@ -1,6 +1,6 @@
-# expert-bassoon
+# SSO Gateway
 
-Sistema de autenticação centralizada (SSO) construído com **Laravel 13**, **Inertia.js** e **Vue 3**. Permite que múltiplas aplicações compartilhem uma única sessão autenticada via cookie de domínio compartilhado, com validação delegada ao Nginx através do módulo `auth_request`.
+Gateway centralizado de autenticação construído com **Laravel 13**, **Inertia.js** e **Vue 3**. Múltiplas aplicações compartilham uma única sessão autenticada via cookie de domínio compartilhado, com validação delegada ao Nginx através do módulo `auth_request`. Para aplicações em domínios diferentes, oferece um fluxo JWT HS256 de uso único.
 
 ---
 
@@ -22,18 +22,18 @@ Sistema de autenticação centralizada (SSO) construído com **Laravel 13**, **I
 - [Análise estática](#análise-estática)
 - [Qualidade de código](#qualidade-de-código)
 - [Deploy e Nginx](#deploy-e-nginx)
-- [Docker Compose](#docker-compose)
+- [Docker](#docker)
 - [Licença](#licença)
 
 ---
 
 ## Visão geral
 
-O **expert-bassoon** atua como o ponto central de autenticação para um conjunto de aplicações em subdomínios do mesmo domínio. O fluxo funciona assim:
+O **SSO Gateway** atua como o ponto central de autenticação para um conjunto de aplicações em subdomínios do mesmo domínio. O fluxo funciona assim:
 
 1. O usuário acessa qualquer aplicação protegida.
-2. O Nginx dessa aplicação faz uma subrequisição interna ao endpoint `/auth/check` deste autenticador, repassando o cookie de sessão.
-3. O autenticador responde `200` (sessão válida) ou `401` (não autenticado).
+2. O Nginx dessa aplicação faz uma subrequisição interna ao endpoint `/auth/check` deste gateway, repassando o cookie de sessão.
+3. O gateway responde `200` (sessão válida) ou `401` (não autenticado).
 4. Em caso de `401`, o Nginx redireciona o usuário ao login com um parâmetro `return_to`, que devolve o usuário à aplicação original após autenticar.
 
 ```
@@ -61,16 +61,15 @@ Browser → app1.dominio.com.br
 | Análise estática | PHPStan nível 6, Larastan |
 | Linting PHP | Laravel Pint |
 | Linting JS/TS | ESLint + Prettier |
-| Qualidade | SonarQube |
 
 ---
 
 ## Requisitos
 
-- PHP **8.3** ou superior com extensões: `pdo_sqlite`, `mbstring`, `xml`, `curl`, `zip`
+- PHP **8.3** ou superior com extensões: `pdo_sqlite`, `mbstring`, `xml`, `curl`, `zip`, `pcntl`
 - Composer **2.x**
 - Node.js **20+** e pnpm **9+**
-- Nginx **1.5.4+** (com `ngx_http_auth_request_module`)
+- Nginx **1.5.4+** (com `ngx_http_auth_request_module`) — apenas para uso como proxy SSO
 
 ---
 
@@ -78,41 +77,33 @@ Browser → app1.dominio.com.br
 
 ### Instalação rápida (recomendado)
 
-O projeto inclui um script `setup` que executa todos os passos automaticamente:
-
 ```bash
-git clone <repo-url> expert-bassoon
-cd expert-bassoon
+git clone <repo-url> sso-gateway
+cd sso-gateway
 composer run setup
 ```
 
 O script executa em sequência:
 1. `composer install`
-2. Instala o `larastan`
-3. Copia `.env.example` → `.env` (se não existir)
-4. Gera a `APP_KEY`
-5. Roda as migrations
+2. Copia `.env.example` → `.env` (se não existir)
+3. Gera a `APP_KEY`
+4. Roda as migrations
+5. Cria o symlink `public/storage`
 6. `pnpm install`
 7. `pnpm run build`
 
 ### Instalação manual
 
 ```bash
-git clone <repo-url> expert-bassoon
-cd expert-bassoon
+git clone <repo-url> sso-gateway
+cd sso-gateway
 
-# Dependências PHP
 composer install
-
-# Ambiente
 cp .env.example .env
 php artisan key:generate
-
-# Banco de dados
 touch database/database.sqlite
 php artisan migrate
-
-# Dependências Node e build
+php artisan storage:link
 pnpm install
 pnpm run build
 ```
@@ -136,7 +127,7 @@ Esse comando sobe em paralelo:
 Copie `.env.example` e ajuste os valores:
 
 ```dotenv
-APP_NAME="expert-bassoon"
+APP_NAME="SSO Gateway"
 APP_ENV=local           # production em produção
 APP_DEBUG=true          # false em produção
 APP_URL=http://localhost
@@ -171,39 +162,58 @@ ALLOWED_HOST_REDIRECT=               # ex: seudominio.com.br
 
 ```
 app/
+├── Console/Commands/
+│   └── PruneSsoTokens.php          # sso:prune-tokens — limpa JWTs expirados
 ├── Http/
 │   ├── Controllers/
 │   │   ├── Admin/
+│   │   │   ├── AppController.php       # CRUD de aplicações SSO + regenerateApiKey
+│   │   │   ├── AuditController.php     # Log de auditoria (admin only)
 │   │   │   ├── SetupController.php     # Configuração inicial (primeiro acesso)
-│   │   │   └── UserController.php      # CRUD de usuários
-│   │   └── Auth/
-│   │       └── AuthController.php      # Login e logout
+│   │   │   ├── SettingsController.php  # Personalização da página de login
+│   │   │   └── UserController.php      # CRUD de usuários (admin only)
+│   │   ├── Auth/
+│   │   │   └── AuthController.php      # Login e logout
+│   │   ├── Sso/
+│   │   │   └── TokenController.php     # GET /sso/token (emite JWT) + POST /sso/validate + GET /sso/logout
+│   │   ├── HealthController.php        # GET /health — JSON com status do banco
+│   │   └── ProfileController.php       # Perfil do usuário autenticado
 │   ├── Middleware/
-│   │   ├── CheckFirstSetup.php         # Redireciona para /setup se não houver usuários
-│   │   ├── HandleInertiaRequests.php   # Compartilha dados globais com o frontend
-│   │   └── UniversalAuth.php          # Controle de acesso às rotas
-│   └── Requests/
-│       └── Auth/
-│           └── LoginRequest.php        # Validação do formulário de login
+│   │   ├── CheckFirstSetup.php
+│   │   ├── EnsureIsAdmin.php
+│   │   └── UniversalAuth.php
+│   └── Requests/Auth/
+│       └── LoginRequest.php
 ├── Models/
-│   └── User.php
-└── Services/
-    └── Auth/
-        └── AuthService.php             # Lógica de autenticação
+│   ├── ActivityLog.php     # Log imutável de eventos
+│   ├── App.php             # App SSO: api_key, allowed_domains, callback_url
+│   ├── Setting.php         # Key-value de configurações
+│   ├── SsoToken.php        # JTIs de uso único para replay protection
+│   └── User.php            # username, nickname, is_admin
+└── Services/Auth/
+    ├── AuthService.php
+    ├── JwtService.php               # HS256 puro, sem biblioteca externa
+    └── UsernameValidationService.php
 
 resources/js/
+├── components/
+│   ├── ActionCard.vue
+│   ├── AppHeader.vue
+│   ├── AppLogo.vue
+│   └── PasswordInput.vue
 ├── pages/
-│   ├── Auth/
-│   │   └── Login.vue
+│   ├── Auth/Login.vue
 │   ├── Admin/
-│   │   ├── Setup.vue                   # Página de configuração inicial
-│   │   └── Users/
-│   │       ├── Index.vue               # Listagem de usuários
-│   │       ├── Create.vue              # Criação de usuário
-│   │       └── Edit.vue                # Edição de usuário
-│   └── Dashboard.vue
-└── routes/
-    └── index.ts                        # Rotas geradas pelo Wayfinder
+│   │   ├── Apps/{Index,Create,Edit}.vue
+│   │   ├── Audit.vue
+│   │   ├── Settings.vue
+│   │   ├── Setup.vue
+│   │   └── Users/{Index,Create,Edit}.vue
+│   ├── Home.vue
+│   └── Profile/Edit.vue
+└── types/
+    ├── auth.ts
+    └── global.d.ts
 ```
 
 ---
@@ -212,33 +222,21 @@ resources/js/
 
 | Método | URI | Descrição | Auth |
 |--------|-----|-----------|------|
-| `GET` | `/` | Redireciona para `/login` | — |
-| `GET` | `/login` | Página de login | — |
-| `POST` | `/login` | Processa o login | — |
-| `POST` | `/logout` | Encerra a sessão | — |
-| `GET` | `/setup` | Configuração inicial do administrador | — |
-| `POST` | `/setup` | Cria o primeiro usuário administrador | — |
-| `GET` | `/dashboard` | Dashboard principal | Sim |
-| `GET` | `/health` | Health check do serviço (retorna JSON) | — |
+| `GET` | `/health` | Health check (JSON: status + banco) | — |
 | `GET` | `/auth/check` | Validação de sessão para o Nginx `auth_request` | — |
-| `GET` | `/sso/token` | Emite JWT de uso único para SSO cross-domain | Sim |
-| `POST` | `/sso/validate` | Valida o JWT emitido (chamado pelo backend da app) | — |
-| `GET` | `/admin/audit` | Logs de auditoria | Admin |
+| `GET/POST` | `/login` | Página e processamento do login | — |
+| `POST` | `/logout` | Encerra a sessão | — |
+| `GET/POST` | `/setup` | Configuração inicial do administrador | — |
+| `GET` | `/home` | Home do usuário autenticado | Sim |
+| `GET/PUT` | `/profile` | Perfil do usuário (nickname e senha) | Sim |
+| `GET` | `/sso/token` | Emite JWT de uso único (throttle: 30/min) | Sim |
+| `POST` | `/sso/validate` | Valida o JWT (throttle: 60/min; CSRF exempt) | — |
+| `GET` | `/sso/logout` | Encerra sessão e redireciona para app | — |
 | `GET/PUT` | `/admin/settings` | Personalização da página de login | Admin |
-| `GET` | `/admin/users` | Lista todos os usuários | Admin |
-| `GET` | `/admin/users/create` | Formulário de criação | Admin |
-| `POST` | `/admin/users` | Salva novo usuário | Admin |
-| `GET` | `/admin/users/{id}/edit` | Formulário de edição | Admin |
-| `PUT` | `/admin/users/{id}` | Atualiza usuário | Admin |
-| `DELETE` | `/admin/users/{id}` | Remove usuário | Admin |
-| `GET` | `/admin/apps` | Lista aplicações integradas ao SSO | Admin |
-| `GET` | `/admin/apps/create` | Formulário de nova aplicação | Admin |
-| `POST` | `/admin/apps` | Registra nova aplicação | Admin |
-| `GET` | `/admin/apps/{id}/edit` | Formulário de edição da aplicação | Admin |
-| `PUT` | `/admin/apps/{id}` | Atualiza aplicação | Admin |
-| `DELETE` | `/admin/apps/{id}` | Remove aplicação | Admin |
-| `POST` | `/admin/apps/{id}/regenerate-key` | Regenera a API Key da aplicação | Admin |
-
+| `GET` | `/admin/audit` | Logs de auditoria paginados | Admin |
+| `GET/POST/PUT/DELETE` | `/admin/users*` | CRUD de usuários | Admin |
+| `GET/POST/PUT/DELETE` | `/admin/apps*` | CRUD de aplicações SSO | Admin |
+| `POST` | `/admin/apps/{app}/regenerate-key` | Regenera a API Key da aplicação | Admin |
 
 ---
 
@@ -249,9 +247,9 @@ resources/js/
 ```
 POST /login
   └── LoginRequest (validação)
-        └── AuthService::autenticationFunction()
-              └── Auth::attempt(['username', 'password', 'remember'])
-                    ├── Sucesso → redireciona para return_to ou /dashboard
+        └── AuthService::attempt()
+              └── Auth::attempt(['username', 'password'])
+                    ├── Sucesso → redireciona para return_to ou /home
                     └── Falha   → volta com erro no campo "username"
 ```
 
@@ -263,10 +261,12 @@ O redirecionamento pós-login aceita um parâmetro `return_to` na query string o
 - Se não há usuários no banco → redireciona para `/setup`
 - Se há usuários e a rota é `/setup` → redireciona para `/login`
 
-**`UniversalAuth`** — roda nas rotas protegidas:
-- Verifica `Auth::check()` ou cookie `remember_me`
+**`UniversalAuth`** — roda em todas as rotas nomeadas:
 - Não autenticado tentando rota protegida → redireciona para `/login?return_to=...`
-- Autenticado tentando acessar `/login` → redireciona para `/dashboard`
+- Autenticado tentando acessar `/login` → redireciona para `/home`
+
+**`EnsureIsAdmin`** — aplicado a todas as rotas `/admin/*`:
+- `is_admin = false` → HTTP 403
 
 ---
 
@@ -289,6 +289,7 @@ Além do SSO via cookie (subdomínios), o gateway oferece um fluxo JWT para inte
 
 4. O backend de outro-site.com valida o token:
    POST https://auth.seudominio.com/sso/validate
+   Content-Type: application/json
    { "token": "<jwt>", "api_key": "<API_KEY_DA_APLICAÇÃO>" }
 
 5. Resposta de sucesso:
@@ -320,6 +321,15 @@ Além do SSO via cookie (subdomínios), o gateway oferece um fluxo JWT para inte
 
 O JWT é assinado com **HS256** usando a API Key da aplicação. O `jti` é registrado no banco e invalidado após o primeiro uso — **tokens não podem ser reutilizados**.
 
+### Limpeza de tokens expirados
+
+Tokens expirados são limpos automaticamente pelo comando agendado diariamente:
+
+```bash
+php artisan sso:prune-tokens            # padrão: expirados há mais de 24h
+php artisan sso:prune-tokens --hours=48 # customizável
+```
+
 ---
 
 ## Painel administrativo
@@ -337,11 +347,11 @@ O painel administrativo (`/home` → seção "Ações do Administrador") central
 
 ### Usuários
 
-- **Listagem** — tabela com busca em tempo real por nome de usuário
-- **Criar usuário** — formulário com usuário, senha e confirmação
-- **Editar usuário** — atualiza nome de usuário e/ou senha (senha opcional na edição)
-- **Excluir usuário** — modal de confirmação antes da exclusão
-- **Indicador "você"** — destaca o próprio usuário na listagem
+- **Listagem** — tabela com todos os usuários; badge "admin" para administradores
+- **Criar usuário** — usuário, apelido (opcional), senha, toggle de admin
+- **Editar usuário** — atualiza dados; senha opcional na edição
+- **Excluir usuário** — o admin logado não pode se auto-excluir
+- **Toggle de admin** — desabilitado quando o admin está editando a si mesmo
 
 ### Aplicações SSO
 
@@ -349,9 +359,12 @@ O painel administrativo (`/home` → seção "Ações do Administrador") central
 - **API Key** — gerada automaticamente; visível na tela de edição (pode ser regenerada)
 - **Subdomínios** — se `app.seudominio.com` está na lista, todos os subdomínios são aceitos
 
-### Primeiro acesso
+### Personalizar Login
 
-Se o banco estiver vazio (ex: novo ambiente), qualquer acesso ao sistema redireciona automaticamente para `/setup`. Nessa página é possível definir o usuário e senha do administrador. Após o cadastro, o login é feito automaticamente e o usuário é redirecionado ao dashboard.
+- Nome da aplicação exibido na página de login
+- Logo personalizada (upload de imagem)
+- Cor principal do SVG e cor de fundo da página
+- CSS personalizado injetado apenas na página de login
 
 ---
 
@@ -359,7 +372,7 @@ Se o banco estiver vazio (ex: novo ambiente), qualquer acesso ao sistema redirec
 
 ```bash
 # 1. Clone e instale
-git clone <repo-url> expert-bassoon && cd expert-bassoon
+git clone <repo-url> sso-gateway && cd sso-gateway
 composer run setup
 
 # 2. Inicie o servidor de desenvolvimento
@@ -367,8 +380,8 @@ composer run dev
 
 # 3. Acesse http://localhost:8000
 #    → Será redirecionado automaticamente para /setup
-#    → Defina usuário e senha do administrador
-#    → Login automático → Dashboard
+#    → Defina o tipo de validação do usuário, usuário e senha do administrador
+#    → Login automático → Home
 ```
 
 ---
@@ -399,6 +412,13 @@ composer run dev
 | `pnpm run format:check` | Verifica formatação sem modificar |
 | `pnpm run types:check` | Verifica tipos TypeScript com vue-tsc |
 
+### Artisan
+
+| Comando | Descrição |
+|---------|-----------|
+| `php artisan sso:prune-tokens` | Remove tokens JWT expirados há mais de 24h |
+| `php artisan sso:prune-tokens --hours=48` | Remove tokens expirados há mais de N horas |
+
 ---
 
 ## Testes
@@ -409,19 +429,27 @@ O projeto usa **Pest 4** com o plugin Laravel.
 # Rodar todos os testes
 php artisan test
 
-# Ou via composer (inclui lint)
+# Ou via composer (inclui lint e cache:clear)
 composer run test
 
-# Com cobertura
-php artisan test --coverage
+# Filtrar por classe ou método
+php artisan test --filter UserControllerTest
 ```
 
 A suíte cobre:
 
-- `AuthControllerTest` — login com credenciais válidas/inválidas, redirecionamentos
-- `LoginRequestTest` — validação dos campos do formulário
-- `UniversalAuthTest` — comportamento do middleware de acesso
-- `AuthServiceTest` — lógica de autenticação
+| Classe de teste | Módulo |
+|----------------|--------|
+| `AuthControllerTest` | Login, logout, redirecionamentos, eventos de auditoria |
+| `SetupControllerTest` | Setup inicial, validação de CPF/celular/regex |
+| `UserControllerTest` | CRUD de usuários, validação de username, regras de admin |
+| `ProfileControllerTest` | Edição de perfil, troca de senha, senha atual obrigatória |
+| `AuditControllerTest` | Listagem, filtros, paginação, acesso restrito a admin |
+| `SettingsControllerTest` | Leitura e atualização de configurações de login |
+| `AppControllerTest` | CRUD de aplicações SSO, regeneração de API Key |
+| `TokenControllerTest` | Emissão e validação de JWT, replay protection, throttle |
+| `HealthControllerTest` | Resposta JSON, status do banco |
+| `PruneSsoTokensTest` | Limpeza de tokens por janela de tempo, output do comando |
 
 ---
 
@@ -451,6 +479,10 @@ Configurado com o preset `laravel` e regras adicionais em `pint.json`. Principai
 ### TypeScript / Vue — ESLint + Prettier
 
 Configurado em `eslint.config.js` com os plugins `eslint-plugin-vue`, `typescript-eslint` e `@stylistic/eslint-plugin`. Formatação gerenciada pelo Prettier com `prettier-plugin-tailwindcss`.
+
+Convenções do frontend:
+- Sem comentários em arquivos `.vue` ou `.ts`
+- Nunca usar `v-html` — risco de XSS; usar `v-text` + função de decode pura para entidades HTML
 
 ---
 
@@ -492,28 +524,21 @@ server {
 }
 ```
 
-### Deploy da aplicação
+### Deploy manual
 
 ```bash
-# Build dos assets
 pnpm run build
-
-# Cache de configurações
 php artisan config:cache
 php artisan route:cache
 php artisan view:cache
-
-# Link do storage público (logos)
 php artisan storage:link
-
-# Permissões
-chown -R www-data:www-data /var/www/auth
-chmod -R 775 /var/www/auth/storage /var/www/auth/bootstrap/cache
+chown -R www-data:www-data /var/www/sso-gateway/storage /var/www/sso-gateway/bootstrap/cache
+chmod -R 775 /var/www/sso-gateway/storage /var/www/sso-gateway/bootstrap/cache
 ```
 
 ---
 
-## Docker Compose
+## Docker
 
 Um exemplo de configuração Docker está disponível em `docker-compose.example.yml`:
 
@@ -523,7 +548,15 @@ cp docker-compose.example.yml docker-compose.yml
 docker compose up -d
 ```
 
-Inclui os serviços `app` (PHP-FPM) e `nginx` com volume compartilhado para `storage/`.
+Inclui três serviços:
+
+| Serviço | Descrição |
+|---------|-----------|
+| `app` | PHP-FPM 8.3 com OPcache; executa migrations automaticamente na inicialização |
+| `nginx` | Proxy reverso para o serviço `app` |
+| `scheduler` | Executa `php artisan schedule:run` a cada 60s (necessário para `sso:prune-tokens`) |
+
+O volume `sso_storage` é compartilhado entre `app` e `nginx` para servir os arquivos de `storage/` (logos, etc.).
 
 ---
 
